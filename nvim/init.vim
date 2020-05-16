@@ -46,45 +46,61 @@ Plug 'ludovicchabant/vim-gutentags'
     let g:gutentags_file_list_command = 'rg --files'
   endif
 
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
-  let g:coc_global_extensions = [
-    \ 'coc-css',
-    \ 'coc-eslint',
-    \ 'coc-flutter',
-    \ 'coc-html',
-    \ 'coc-json',
-    \ 'coc-markdownlint',
-    \ 'coc-python',
-    \ 'coc-solargraph',
-    \ 'coc-tsserver',
-    \ 'coc-yaml',
-  \ ]
+Plug 'neovim/nvim-lsp'
+  " Node dependencies:
+  " npm install -g \
+  "   vscode-html-languageserver-bin \
+  "   typescript-language-server \
+  "   vim-language-server \
 
-  function! s:check_back_space() abort
-    let col = col('.') - 1
-    return !col || getline('.')[col - 1]  =~# '\s'
-  endfunction
+  " Brew-available formulae:
+  " brew tap dart-lang/dart && \
+  " brew install \
+  "   dart \
+  "   golang
 
-  function! s:show_documentation()
-    if (index(['vim','help'], &filetype) >= 0)
-      execute 'h '.expand('<cword>')
-    else
-      call CocAction('doHover')
-    endif
-  endfunction
+  " Pip dependencies:
+  " pip3 install python-language-server
 
-  inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-  inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+  " Ruby dependencies:
+  " gem install solargraph
+Plug 'haorenW1025/completion-nvim'
 
-  nmap <Leader>gd <Plug>(coc-definition)
-  nmap <Leader>gi <Plug>(coc-implementation)
-  nmap <Leader>gr <Plug>(coc-references)
-  nmap <Leader>rn <Plug>(coc-rename)
-  nnoremap <silent> K :call <SID>show_documentation()<CR>
-
+" Plug 'neoclide/coc.nvim', {'branch': 'release'}
+"   let g:coc_global_extensions = [
+"     \ 'coc-css',
+"     \ 'coc-eslint',
+"     \ 'coc-flutter',
+"     \ 'coc-html',
+"     \ 'coc-json',
+"     \ 'coc-markdownlint',
+"     \ 'coc-python',
+"     \ 'coc-solargraph',
+"     \ 'coc-tsserver',
+"     \ 'coc-yaml',
+"   \ ]
+"
+"
+"   function! s:show_documentation()
+"     if (index(['vim','help'], &filetype) >= 0)
+"       execute 'h '.expand('<cword>')
+"     else
+"       call CocAction('doHover')
+"     endif
+"   endfunction
+"
+"   inoremap <silent><expr> <TAB>
+"       \ pumvisible() ? "\<C-n>" :
+"       \ <SID>check_back_space() ? "\<TAB>" :
+"       \ coc#refresh()
+"   inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+"
+"   nmap <Leader>gd <Plug>(coc-definition)
+"   nmap <Leader>gi <Plug>(coc-implementation)
+"   nmap <Leader>gr <Plug>(coc-references)
+"   nmap <Leader>rn <Plug>(coc-rename)
+"   nnoremap <silent> K :call <SID>show_documentation()<CR>
+"
 Plug 'psliwka/vim-smoothie'
   let g:smoothie_base_speed = 32
   let g:smoothie_update_interval = 10
@@ -115,6 +131,39 @@ Plug '~/.config/nvim/plugged/vim-execution/'
 
 Plug '~/.config/nvim/plugged/vim-groovy-theme/'
 call plug#end()
+
+" LSP Configuration
+if exists('g:nvim_lsp')
+lua << EOF
+  local nvim_lsp = require'nvim_lsp'
+  -- Disable Diagnostcs globally
+  vim.lsp.callbacks["textDocument/publishDiagnostics"] = function() end
+
+  -- Extensions
+  nvim_lsp.dartls.setup{}
+  nvim_lsp.gopls.setup{}
+  nvim_lsp.html.setup{}
+  nvim_lsp.pyls.setup{}
+  nvim_lsp.solargraph.setup{}
+  nvim_lsp.tsserver.setup{}
+  nvim_lsp.vimls.setup{}
+EOF
+
+augroup LSP
+  autocmd!
+  autocmd BufEnter * lua require'completion'.on_attach()
+augroup END
+
+inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+let g:completion_enable_auto_popup = 0
+
+nnoremap <silent> gd <cmd>lua vim.lsp.buf.declaration()<CR>
+nnoremap <silent> K <cmd>lua vim.lsp.buf.hover()<CR>
+nnoremap <silent> <Leader>gd <cmd>lua vim.lsp.buf.definition()<CR>
+nnoremap <silent> <Leader>gi <cmd>lua vim.lsp.buf.implementation()<CR>
+nnoremap <silent> <Leader>gr <cmd>lua vim.lsp.buf.references()<CR>
+endif
 " }}}
 
 "   Interface  {{{
@@ -143,7 +192,7 @@ set statusline=\
 set statusline+=%f\ 
 set statusline+=%h%m%r\ 
 set statusline+=%<
-set statusline+=%{coc#status()}\ 
+" set statusline+=%{coc#status()}\ 
 set statusline+=%=
 set statusline+=%<
 set statusline+=%#Search#
